@@ -402,7 +402,7 @@ def plot_phik(data, figsize=(12, 8)):
         fmt=".1f",
         cmap='coolwarm',
         cbar=True,
-        annot_kws={"size": 10}  # размер шрифта цифр
+        annot_kws={"size": 1}  # размер шрифта цифр
     )
     
     plt.show()
