@@ -296,102 +296,71 @@ def divide_data(df, target_col):
     return X, y
 
 
-def plot_categorical_relationship(df, col1, col2, figsize=(18, 6)):
-    """
-    Строит 3 тепловые карты:
-    1) абсолютные значения,
-    2) доли внутри col1 (по строкам),
-    3) доли внутри col2 (по столбцам).
+def plot_categorical_relationship_1(df, col1, col2, figsize=(18, 6)):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
 
-    Автоматически подстраивает размер шрифта и поворачивает подписи,
-    чтобы графики оставались читаемыми даже при многих категориях.
-    """
-    # 1. Считаем таблицы
     count = pd.crosstab(df[col1], df[col2])
     row_prop = pd.crosstab(df[col1], df[col2], normalize='index')
     col_prop = pd.crosstab(df[col1], df[col2], normalize='columns')
 
-    # 2. Число категорий для настройки шрифта
     n_rows = len(count)
     n_cols = len(count.columns)
+    total_cells = n_rows * n_cols
 
-    # Подбираем размер шрифта в зависимости от числа категорий
-    if n_rows > 15 or n_cols > 15:
+    # Делаем шрифты ещё меньше
+    if total_cells > 150:
+        # Слишком много ячеек: убираем цифры, оставляем только цвета
+        annot = False
         annot_fontsize = 6
-        label_fontsize = 8
-        tick_labelsize = 6
+        label_fontsize = 9
+        tick_labelsize = 7
+    elif n_rows > 12 or n_cols > 12:
         annot = True
-    elif n_rows > 8 or n_cols > 8:
-        annot_fontsize = 8
+        annot_fontsize = 5          # очень мелкие цифры
         label_fontsize = 10
         tick_labelsize = 8
+    elif n_rows > 6 or n_cols > 6:
         annot = True
+        annot_fontsize = 7
+        label_fontsize = 11
+        tick_labelsize = 9
     else:
-        annot_fontsize = 10
+        annot = True
+        annot_fontsize = 9
         label_fontsize = 12
         tick_labelsize = 10
-        annot = True
 
-    # Если очень много ячеек — отключаем аннотации, иначе будет «каша»
-    if n_rows * n_cols > 200:
-        annot = False
-
-    # 3. Создаём фигуру
     fig, axes = plt.subplots(1, 3, figsize=figsize)
 
-    # 4. Абсолютные значения
-    sns.heatmap(
-        count,
-        annot=annot,
-        fmt="d",
-        cmap="Blues",
-        ax=axes[0],
-        annot_kws={"fontsize": annot_fontsize},
-        cbar_kws={"shrink": 0.8},
-    )
-    axes[0].set_title(f'Абсолютные значения\n{col1} vs {col2}', fontsize=label_fontsize)
-    axes[0].set_xlabel(col2, fontsize=label_fontsize)
-    axes[0].set_ylabel(col1, fontsize=label_fontsize)
-    axes[0].tick_params(axis='both', labelsize=tick_labelsize)
-    axes[0].tick_params(axis='x', rotation=45)
+    def draw_heatmap(data, ax, cmap, title, fmt):
+        sns.heatmap(
+            data,
+            annot=annot,
+            fmt=fmt,
+            cmap=cmap,
+            ax=ax,
+            annot_kws={"fontsize": annot_fontsize},
+            cbar_kws={"shrink": 0.8},
+            linewidths=0.3,           # тонкие линии между ячейками — помогает разделять визуально
+            linecolor="#e0e0e0"       # светлый цвет линий
+        )
+        ax.set_title(title, fontsize=label_fontsize)
+        ax.set_xlabel(col2, fontsize=label_fontsize)
+        ax.set_ylabel(col1, fontsize=label_fontsize)
+        ax.tick_params(axis='both', labelsize=tick_labelsize)
+        ax.tick_params(axis='x', rotation=45)
 
-    # 5. Доли внутри col1 (по строкам)
-    sns.heatmap(
-        row_prop,
-        annot=annot,
-        fmt=".2f",
-        cmap="Greens",
-        ax=axes[1],
-        annot_kws={"fontsize": annot_fontsize},
-        cbar_kws={"shrink": 0.8},
-    )
-    axes[1].set_title(f'Доли внутри {col1}\n(по строкам)', fontsize=label_fontsize)
-    axes[1].set_xlabel(col2, fontsize=label_fontsize)
-    axes[1].set_ylabel(col1, fontsize=label_fontsize)
-    axes[1].tick_params(axis='both', labelsize=tick_labelsize)
-    axes[1].tick_params(axis='x', rotation=45)
-
-    # 6. Доли внутри col2 (по столбцам)
-    sns.heatmap(
-        col_prop,
-        annot=annot,
-        fmt=".2f",
-        cmap="Oranges",
-        ax=axes[2],
-        annot_kws={"fontsize": annot_fontsize},
-        cbar_kws={"shrink": 0.8},
-    )
-    axes[2].set_title(f'Доли внутри {col2}\n(по столбцам)', fontsize=label_fontsize)
-    axes[2].set_xlabel(col2, fontsize=label_fontsize)
-    axes[2].set_ylabel(col1, fontsize=label_fontsize)
-    axes[2].tick_params(axis='both', labelsize=tick_labelsize)
-    axes[2].tick_params(axis='x', rotation=45)
+    draw_heatmap(count, axes[0], "Blues", f'Абсолютные значения\n{col1} vs {col2}', "d")
+    draw_heatmap(row_prop, axes[1], "Greens", f'Доли внутри {col1}\n(по строкам)', ".2f")
+    draw_heatmap(col_prop, axes[2], "Oranges", f'Доли внутри {col2}\n(по столбцам)", ".2f")
 
     plt.tight_layout()
     plt.show()
     
 # импорт матрицы phik
-def plot_phik(data, figsize=(12, 8)):
+def plot_phik_1(data, figsize=(12, 8)):
     phik_matrix = data.phik_matrix()
     
     plt.figure(figsize=figsize)
@@ -402,7 +371,7 @@ def plot_phik(data, figsize=(12, 8)):
         fmt=".1f",
         cmap='coolwarm',
         cbar=True,
-        annot_kws={"size": 1}  # размер шрифта цифр
+        annot_kws={"size": 10}  # размер шрифта цифр
     )
     
     plt.show()
